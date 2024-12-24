@@ -108,14 +108,20 @@ const handleAddressChange = (e) => {
   const handleRentNow = async () => {
     const requestData = {
       productId: selectedProductId, // ID of the product to be rented
+      customerId: sessionStorage.getItem('userId'), // Assuming userId is stored in sessionStorage
+      supplierId: product.supplierId, // Assuming supplierId is part of the product data
+      category: product.category,
       selectedAddress,
+      phoneNumber: sessionStorage.getItem('phoneNumber'), // Assuming phoneNumber is stored in sessionStorage
       fromDate,
       fromTime,
       endDate,
       endTime,
+      orderDate: new Date().toISOString().split('T')[0], // Current date
     };
   
     try {
+      console.log("Sending rental request with data:", requestData); // Debugging log
       const response = await createRentalRequest(requestData);
       console.log("Rental request sent successfully:", response);
       setIsSuccessPopupVisible(true); // Show success popup

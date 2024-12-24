@@ -303,14 +303,15 @@ export const deleteProduct = async (productId) => {
 
 export const createRentalRequest = async (requestData) => {
   try {
+    console.log("Creating rental request with data:", requestData); // Debugging log
     const response = await api.post('/products/rental-requests', requestData, {
       headers: {
         'Content-Type': 'application/json', // JSON format for rental requests
       },
     });
+    console.log("Rental request created successfully:", response.data); // Debugging log
     return response.data; // Return the response data for success handling
   } catch (error) {
-    console.log(requestData)
     console.error("Error creating rental request:", error?.response?.data?.message || error.message);
     throw new Error(error?.response?.data?.message || "Error creating rental request.");
   }
@@ -318,27 +319,40 @@ export const createRentalRequest = async (requestData) => {
 
 export const updateRentalRequestStatus = async (id, status) => {
   try {
-    const response = await api.put(`/products/rental-requests/${id}/status`, { status }, {
-      headers: {
-        'Content-Type': 'application/json', // Ensure request body is in JSON format
-      },
-    });
-    return response.data; // Return the response data on success
+    console.log("Sending update request:", { id, status });
+    const response = await api.put(
+      `/products/rental-requests/${id}/status`,
+      { status },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionStorage.getItem('token')}`, // Ensure token is included
+        },
+      }
+    );
+    console.log("Update successful:", response.data);
+    return response.data;
   } catch (error) {
-    console.error("Error updating rental request status:", error?.response?.data?.message || error.message);
-    throw new Error(error?.response?.data?.message || "Error updating rental request status.");
+    console.error("Error updating rental request status:", {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
+    throw new Error(error.response?.data?.message || "Error updating rental request status.");
   }
 };
 
+
 export const fetchRentalRequests = async (filter = {}) => {
   try {
-    // Send GET request to fetch rental requests, including optional filters as query parameters
+    console.log("Fetching rental requests with filter:", filter); // Debugging log
     const response = await api.get('/products/rental-requests', {
       params: filter, // Pass the filter object as query parameters
       headers: {
         'Content-Type': 'application/json', // Ensure request headers are set
       },
     });
+    console.log("Fetched rental requests:", response.data); // Debugging log
     return response.data; // Return the response data on success
   } catch (error) {
     console.error("Error fetching rental requests:", error?.response?.data?.message || error.message);

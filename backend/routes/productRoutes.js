@@ -1,9 +1,10 @@
 const express = require('express');
 const path = require('path');
 const router = express.Router();
-const RentalRequest = require('../models/RentalRequest');
+const RentalRequest = require('../models/rentalRequest');
 const Product = require('../models/Product');
 const PersonalDetails = require('../models/PersonalDetails');
+const Address = require('../models/Address');
 const { authenticate } = require('../middleware/authMiddleware'); // Ensure this path is correct
 
 // Import the upload middleware
@@ -115,9 +116,6 @@ router.put('/:productId', authenticate, uploadMiddleware, async (req, res) => {
   }
 });
 
-
-
-
 router.delete('/:productId', authenticate, async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.productId);
@@ -169,15 +167,8 @@ router.get('/rental-requests', authenticate, async (req, res) => {
     const { date, status, category } = req.query;
     let filter = {};
 
-    // User-based filtering
-    if (req.user) {
-      if (req.user.supplierId) {
-        filter.supplierId = req.user._id;
-      }
-      if (req.user.customerId) {
-        filter.customerId = req.user._id;
-      }
-    }
+    // Ensure only the product owner can see the rental requests
+    filter.supplierId = req.user._id;
 
     // Query parameter filtering
     if (date) {
@@ -235,10 +226,10 @@ router.get('/:id', async (req, res) => {
 
 router.post('/rental-requests', authenticate, async (req, res) => {
   try {
-    const { productId, selectedAddress, fromDate, fromTime, endDate, endTime } = req.body;
+    const { productId, selectedAddress, fromDate, fromTime, endDate, endTime, orderDate } = req.body;
 
     // Validate request data
-    if (!productId || !selectedAddress || !fromDate || !endDate || !fromTime || !endTime) {
+    if (!productId || !selectedAddress || !fromDate || !endDate || !fromTime || !endTime || !orderDate) {
       return res.status(400).json({ message: "All fields are required." });
     }
 
@@ -250,6 +241,7 @@ router.post('/rental-requests', authenticate, async (req, res) => {
     // Find the product to get the supplier ID
     const product = await Product.findById(productId);
     const personal = await PersonalDetails.findOne({ user: req.user._id });
+    const address = await Address.findById(selectedAddress);
     if (!product) {
       return res.status(404).json({ message: "Product not found." });
     }
@@ -259,18 +251,31 @@ router.post('/rental-requests', authenticate, async (req, res) => {
     if (!personal || !personal.phoneNumber) {
       return res.status(404).json({ message: "User personal details or phone number not found." });
     }
+    if (!address) {
+      return res.status(404).json({ message: "Address not found." });
+    }
+
+    // Generate order ID
+    const supplierId = product.userId.toString().slice(-4); // Get last 4 characters of supplier ID
+    const rentalRequestCount = await RentalRequest.countDocuments({ supplierId: product.userId });
+    const orderId = `#${supplierId}${String(rentalRequestCount + 1).padStart(4, '0')}`;
 
     // Create a rental request
     const rentalRequest = new RentalRequest({
       productId,
       customerId: req.user._id, // Retrieved from the authenticate middleware
       supplierId: product.userId, // Supplier ID from the product model
+      orderId, // Generated order ID
+      category: product.subCategory,
       selectedAddress,
       phoneNumber: personal.phoneNumber,
       fromDate,
       fromTime,
       endDate,
       endTime,
+      customerName: `${personal.firstName} ${personal.lastName}`,
+      address: `${address.line1}, ${address.city}, ${address.state}, ${address.zip}`,
+      orderDate, // Set the order date to the current date
     });
 
     await rentalRequest.save();
@@ -293,7 +298,7 @@ router.put('/rental-requests/:id/status', authenticate, async (req, res) => {
     const { status } = req.body;
 
     // Validate the status
-    const validStatuses = ['pending', 'rejected', 'payment', 'shipped', 'delivered', 'returned'];
+    const validStatuses = ['Pending', 'Rejected', 'Payment', 'Shipped', 'Delivered', 'Returned'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: "Invalid status." });
     }
@@ -320,7 +325,5 @@ router.put('/rental-requests/:id/status', authenticate, async (req, res) => {
     res.status(500).json({ message: "An error occurred while updating the rental request status.", error: error.message });
   }
 });
-
-
 
 module.exports = router;

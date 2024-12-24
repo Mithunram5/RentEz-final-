@@ -145,6 +145,9 @@
     height: 92%;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
   
   /* Header */
@@ -188,12 +191,9 @@
   .product-details {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: space-evenly;
   }
   
-  
-  
-
   .product-details h2 {
     font-size: 20px;
     font-weight: bold;
@@ -222,7 +222,7 @@
   .summary-info{
     display: flex;
     flex-direction: row-reverse;
-    justify-content: space-between;
+    justify-content: space-evenly;
   }
   .order-summary {
     border: 1px solid #ddd;
@@ -269,8 +269,7 @@
   /* Buttons */
   .buttons {
     display: flex;
-    justify-content: center;
-    gap: 10px;
+    justify-content: space-evenly;
   }
   
   .buttons button {
@@ -289,4 +288,3 @@
   .reject {
     background-color: #dc3545;
   }
-  

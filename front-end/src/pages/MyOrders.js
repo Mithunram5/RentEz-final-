@@ -6,6 +6,7 @@ const Orders = () => {
     const [filter, setFilter] = useState({ date: '', orderType: '', status: '' });
     const [currentPage, setCurrentPage] = useState(1);
     const ordersPerPage = 10;
+    const OrdersPage = () => { const [showDetails, setShowDetails] = useState(false); const [selectedOrder, setSelectedOrder] = useState(null);}
 
     // Dummy order data
     const orders = [
@@ -18,6 +19,8 @@ const Orders = () => {
         { id: 7, imageUrl: '/assets/category3.png', productName: 'Concrete Hammer', orderId: '#0107', quantity: 1, price: 300, placedOn: '12/10/24', arriveOn: '13/10/24', status: 'Returned' },
     ];
 
+    const openDetails = (order) => { setSelectedOrder(order); setShowDetails(true); };
+    const closeDetails = () => { setShowDetails(false); setSelectedOrder(null); };
     const [filteredOrders, setFilteredOrders] = useState(orders);
 
     // Filter handler
@@ -104,7 +107,7 @@ const Orders = () => {
                                     {order.status}
                                 </span>
                             </td>
-                            <td><button className="details-button">View Details</button></td>
+                            <td><button onClick={() => openDetails(order)} className="details-button">View Details</button></td>
                         </tr>
                     ))}
                 </tbody>
